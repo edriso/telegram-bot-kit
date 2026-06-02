@@ -37,8 +37,14 @@ Each bot depends on a pinned tag:
 
 > The repo must be **public** so the bots' CI and Docker builds can fetch it without auth.
 
-To release a change: edit here, `pnpm check`, bump the version, tag (`v0.1.1`), push the tag, then
-point both bots at the new tag (a Renovate/Dependabot config can open those bump PRs automatically).
+To release a change: edit here, `pnpm check`, bump the `version`, add a `CHANGELOG.md` entry,
+commit, and push a new tag (`vX.Y.Z`).
+
+Both bots already run **Renovate**, configured to watch this repo's tags. Soon after you push the
+tag it opens an "update telegram-bot-kit to vX.Y.Z" PR in each bot, the bot's CI (`pnpm check`, which
+runs on the PR) gates it green, and merging the PR deploys that bot. So a fix here reaches both bots
+with two clicks: merge ayah's PR, merge tilawah's. (The "Dependency Dashboard" issue Renovate keeps
+open in each bot is its permanent control panel — leave it open.)
 
 ## Develop
 
