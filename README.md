@@ -31,7 +31,7 @@ Each bot depends on a pinned tag:
 ```jsonc
 // ayah / tilawah package.json
 "dependencies": {
-  "telegram-bot-kit": "github:edriso/telegram-bot-kit#v0.1.0"
+  "telegram-bot-kit": "github:edriso/telegram-bot-kit#v0.1.1"
 }
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "telegram-bot-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "license": "0BSD",
   "description": "Shared kernel for the edriso Telegram Quran bots: timezone/schedule math, the active-day bitmask, Arabic-Indic digits, the root .env loader, the logger, and the plain-text send wrapper. Consumed as TypeScript source (the bots run it through tsx, like their own code).",
