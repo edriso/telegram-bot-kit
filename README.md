@@ -6,15 +6,15 @@ bots from one place, instead of drifting between byte-identical copies.
 
 ## What's in it
 
-| Module       | Exports                                                                                   |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| `types`      | `DeliverySchedule`, `LocalContext`                                                         |
-| `days`       | `ALL_DAYS`, `NO_DAYS`, `isDayActive`, `withDayOn`, `withDayOff`, `toggleDay`, `activeDaysList`, `maskFromDays` |
-| `schedule`   | `getLocalContext`, `scheduledMinutes`, `dueLocalDate` (timezone/DST-aware, all pure)       |
-| `arabic`     | `toArabicDigits`, `toAsciiDigits`                                                          |
-| `env`        | `loadEnv` (finds the consuming bot's root `.env`)                                          |
-| `logger`     | `logger` (timestamped JSON-ish console logger)                                             |
-| `send`       | `sendMessage`, `sendMessages`, `SendResult` (plain-text grammY wrapper with 403/429 handling) |
+| Module     | Exports                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------- |
+| `types`    | `DeliverySchedule`, `LocalContext`                                                                             |
+| `days`     | `ALL_DAYS`, `NO_DAYS`, `isDayActive`, `withDayOn`, `withDayOff`, `toggleDay`, `activeDaysList`, `maskFromDays` |
+| `schedule` | `getLocalContext`, `scheduledMinutes`, `dueLocalDate` (timezone/DST-aware, all pure)                           |
+| `arabic`   | `toArabicDigits`, `toAsciiDigits`                                                                              |
+| `env`      | `loadEnv` (finds the consuming bot's root `.env`)                                                              |
+| `logger`   | `logger` (timestamped JSON-ish console logger)                                                                 |
+| `send`     | `sendMessage`, `sendMessages`, `SendResult` (plain-text grammY wrapper with 403/429 handling)                  |
 
 Everything is pure except `env` (reads a `.env`), `logger` (writes to the console), and `send`
 (calls grammY). `grammy` is a **peer dependency** so the kit uses the bot's own grammY instance.
