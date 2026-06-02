@@ -1,0 +1,47 @@
+{
+  "name": "telegram-bot-kit",
+  "version": "0.1.0",
+  "private": false,
+  "license": "0BSD",
+  "description": "Shared kernel for the edriso Telegram Quran bots: timezone/schedule math, the active-day bitmask, Arabic-Indic digits, the root .env loader, the logger, and the plain-text send wrapper. Consumed as TypeScript source (the bots run it through tsx, like their own code).",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,js,mjs,json,yml,yaml,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,mjs,json,yml,yaml,md}\"",
+    "check": "pnpm typecheck && pnpm lint && pnpm test"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  },
+  "peerDependencies": {
+    "grammy": "^1.42.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.10.5",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "grammy": "^1.42.0",
+    "prettier": "^3.8.3",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.59.4",
+    "vitest": "^4.1.7"
+  }
+}
