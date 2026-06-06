@@ -12,6 +12,37 @@ const MAX_RETRY_AFTER_SECONDS = 30;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
+ * The outcome of one raw send attempt, with the Telegram error already mapped:
+ *   - `{ done }`        : a terminal result ('ok' | 'blocked' | 'failed') to
+ *                         return as-is.
+ *   - `{ retryAfter }`  : a 429; the caller decides whether to wait it out.
+ *
+ * Classifying the error here (rather than inline at each call site) is what
+ * lets the first try and the retry treat a 403/other error identically. The
+ * retry used to be a second, subtly-different path that reported a blocked user
+ * as merely 'failed', so they were never marked blocked and got retried for
+ * ever.
+ */
+type Attempt = { done: SendResult } | { retryAfter: number };
+
+async function attemptSend(bot: Bot<Context>, chatId: bigint, text: string): Promise<Attempt> {
+  try {
+    await bot.api.sendMessage(Number(chatId), text);
+    return { done: 'ok' };
+  } catch (err) {
+    if (err instanceof GrammyError && err.error_code === 403) {
+      logger.info('Subscriber has blocked the bot', { chatId: String(chatId) });
+      return { done: 'blocked' };
+    }
+    if (err instanceof GrammyError && err.error_code === 429) {
+      return { retryAfter: err.parameters?.retry_after ?? 1 };
+    }
+    logger.error('Failed to send message', { chatId: String(chatId), error: String(err) });
+    return { done: 'failed' };
+  }
+}
+
+/**
  * Send one plain-text message to a chat. No parse_mode on purpose: Quran text
  * contains characters Markdown/HTML parsing would reject with a 400, so plain
  * text is the only safe choice.
@@ -24,44 +55,31 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  *               subscriber, so the same content is retried next time.
  *
  * On a 429 (too many requests) we wait the server's suggested retry_after once
- * and try again, which smooths out a multi-message burst to one chat.
+ * and try again, which smooths out a multi-message burst to one chat. A retry
+ * that itself returns 403 is reported as 'blocked', not 'failed'.
  */
 export async function sendMessage(
   bot: Bot<Context>,
   chatId: bigint,
   text: string,
 ): Promise<SendResult> {
-  try {
-    await bot.api.sendMessage(Number(chatId), text);
-    return 'ok';
-  } catch (err) {
-    if (err instanceof GrammyError && err.error_code === 403) {
-      logger.info('Subscriber has blocked the bot', { chatId: String(chatId) });
-      return 'blocked';
-    }
-    if (err instanceof GrammyError && err.error_code === 429) {
-      const retryAfter = err.parameters?.retry_after ?? 1;
-      if (retryAfter <= MAX_RETRY_AFTER_SECONDS) {
-        logger.warn('Rate limited, waiting then retrying once', {
-          chatId: String(chatId),
-          retryAfter,
-        });
-        await sleep(retryAfter * 1000);
-        try {
-          await bot.api.sendMessage(Number(chatId), text);
-          return 'ok';
-        } catch (retryErr) {
-          logger.error('Send failed after retry', {
-            chatId: String(chatId),
-            error: String(retryErr),
-          });
-          return 'failed';
-        }
-      }
-    }
-    logger.error('Failed to send message', { chatId: String(chatId), error: String(err) });
+  const first = await attemptSend(bot, chatId, text);
+  if ('done' in first) return first.done;
+
+  // A 429: honour the server's retry_after once, but only within our cap.
+  // Waiting longer than the cap risks holding up the whole daily run, so we
+  // give up and let the caller retry the delivery on the next tick.
+  const { retryAfter } = first;
+  if (retryAfter > MAX_RETRY_AFTER_SECONDS) {
+    logger.error('Rate limited beyond cap, giving up', { chatId: String(chatId), retryAfter });
     return 'failed';
   }
+  logger.warn('Rate limited, waiting then retrying once', { chatId: String(chatId), retryAfter });
+  await sleep(retryAfter * 1000);
+
+  // A second 429 means the chat is still flooded; stop here rather than loop.
+  const second = await attemptSend(bot, chatId, text);
+  return 'done' in second ? second.done : 'failed';
 }
 
 /**
